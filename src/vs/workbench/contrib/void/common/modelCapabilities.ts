@@ -35,6 +35,7 @@ export const defaultProviderSettings = {
 	},
 	gemini: {
 		apiKey: '',
+		endpoint: '',
 	},
 	groq: {
 		apiKey: '',
