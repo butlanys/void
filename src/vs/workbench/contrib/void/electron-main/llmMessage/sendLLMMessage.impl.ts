@@ -759,7 +759,16 @@ const sendGeminiChat = async ({
 		: undefined
 
 	// instance
-	const genAI = new GoogleGenAI({ apiKey: thisConfig.apiKey });
+	const genAIOptions: any = { apiKey: thisConfig.apiKey };
+
+	// Add custom endpoint if provided
+	if (thisConfig.endpoint && thisConfig.endpoint.trim() !== '') {
+		genAIOptions.httpOptions = {
+			baseUrl: thisConfig.endpoint
+		};
+	}
+
+	const genAI = new GoogleGenAI(genAIOptions);
 
 
 	// manually parse out tool results if XML
