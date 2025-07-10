@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 'use strict';
-
+c
 const gulp = require('gulp');
 const fs = require('fs');
 const path = require('path');
@@ -504,7 +504,8 @@ BUILD_TARGETS.forEach(buildTarget => {
 		gulp.task(vscodeTaskCI);
 
 		const vscodeTask = task.define(`vscode${dashed(platform)}${dashed(arch)}${dashed(minified)}`, task.series(
-			minified ? compileBuildWithManglingTask : compileBuildWithoutManglingTask,
+			// Temporarily disable mangling to avoid overlapping edit errors
+			compileBuildWithoutManglingTask,
 			cleanExtensionsBuildTask,
 			compileNonNativeExtensionsBuildTask,
 			compileExtensionMediaBuildTask,
