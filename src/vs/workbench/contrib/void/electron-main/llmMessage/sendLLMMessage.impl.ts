@@ -759,7 +759,32 @@ const sendGeminiChat = async ({
 		: undefined
 
 	// instance
-	const genAIOptions: any = { apiKey: thisConfig.apiKey };
+	const fetchWithTimeout = async (resource: RequestInfo | URL, options: RequestInit & { timeout?: number } = {}) => {
+		const { timeout = 30000, ...fetchOptions } = options;
+		const controller = new AbortController();
+		const id = setTimeout(() => controller.abort(), timeout);
+
+		try {
+			const response = await fetch(resource, {
+				...fetchOptions,
+				signal: controller.signal
+			});
+			return response;
+		} finally {
+			clearTimeout(id);
+		}
+	};
+
+	const genAIOptions: {
+		apiKey: string;
+		fetchImpl: (resource: RequestInfo | URL, options?: RequestInit & { timeout?: number }) => Promise<Response>;
+		httpOptions?: {
+			baseUrl: string;
+		};
+	} = {
+		apiKey: thisConfig.apiKey,
+		fetchImpl: fetchWithTimeout // 使用自定义fetch实现
+	};
 
 	// Add custom endpoint if provided
 	if (thisConfig.endpoint && thisConfig.endpoint.trim() !== '') {
@@ -836,13 +861,20 @@ const sendGeminiChat = async ({
 		})
 		.catch(error => {
 			const message = error?.message
-			if (typeof message === 'string') {
+			console.error('Gemini API error details:', error);
 
+			if (typeof message === 'string') {
 				if (error.message?.includes('API key')) {
 					onError({ message: invalidApiKeyMessage(providerName), fullError: error });
 				}
 				else if (error?.message?.includes('429')) {
 					onError({ message: 'Rate limit reached. ' + error, fullError: error });
+				}
+				else if (error.message?.includes('fetch failed')) {
+					onError({
+						message: `Failed to fetch from ${thisConfig.endpoint || 'Gemini API'}. Please check your network connection, endpoint URL format, and ensure the endpoint supports CORS.`,
+						fullError: error
+					});
 				}
 				else
 					onError({ message: error + '', fullError: error });
